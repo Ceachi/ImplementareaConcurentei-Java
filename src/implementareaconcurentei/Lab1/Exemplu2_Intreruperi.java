@@ -2,7 +2,7 @@
 package implementareaconcurentei.Lab1;
 
 /**
- *Thread-ul principal creaza un al doilea thread si asteapta ca acesta 
+ *Thread-ul principal(main) creaza un al doilea thread si asteapta ca acesta 
  * sa isi termine executia. Daca al doilea thread nu si-a terminat executia dupa
  * o perioada fixata, thread-ul principal il intrerupe. Threadu-ul secundar,
  * este creat prin implementarea interfetei Runnable
@@ -44,7 +44,7 @@ public class Exemplu2_Intreruperi {
     
     public static void main(String[] args) throws InterruptedException {
         long startTime = System.currentTimeMillis();
-        long waitingTime = 1000 * 60 * 60;
+        long waitingTime = 1000 * 60 * 60; // punel foarte mic si ai sa vezi ca intra pe if-ul de mai jos
         
         
         Thread t1 = new Thread(runnable);

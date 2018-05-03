@@ -1,72 +1,65 @@
 
-package implementareaconcurentei.Lab1;
+package implementareaconcurentei.Lab2;
 
 import java.util.Random;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * 
- * 
- * PRODUCATOR ----> BUFFER -----> CONSUMATOR
- * Doua threaduri comunica prin intemrmediul unui buffer (memorie partajata):
- *  - thread-ul Producator creaza datele si le pune in buffer
- *  - thread-ul Consumator ia datele din buffer si le prelucreaza
- * Probleme de coordonare:
- *  1. Producatorul si consumatorul nu vor accesa bufferul simultan.
- *  2. Producatorul nu va pune in buffer date noi daca datele din buffer nu au 
- * fost consumate.
- *  3. Cele doua thread-uri se vor anunta unul pe altul cand starea buferului 
- * s-a schimbat
- * 
- * Modelul Producator Consumator
- * implementarea foloseste blocuri cu garzi
- * thread-ul este suspendat pana cand o anume conditie este satisfacuta
- *
- *
- *
- *Guarded blocks ( folosit cand vrei sa faci threadurile sa se coordoneze) :
- *https://docs.oracle.com/javase/tutorial/essential/concurrency/guardmeth.html
- *
+ * TODO:
+ * ceva nu mi-a iesit la exemplul asta
  * @author CeachiBogdan
  */
 
-class Buffer { // implementarea Bufferului, acesta se face cu metode sincronizate
+class Buffer { 
     private String message;
     private boolean empty = true;
     
-    public synchronized String take() { // accesul se face prin metode sincronizate
-        while(empty) { 
-            try {
-                wait(); // Object.wait  to suspend the current thread 
-                
-                /*
-                 * The invocation of wait does not return until 
-                 * another thread has issued a notification that some special event may have occurred
-                 *  — though not necessarily the event this thread is waiting for:
-                 */
-            } catch (InterruptedException ex) {
-                System.out.println(ex.getMessage());
+    // adaugam Lock si Condition lock
+    private Lock bufferLock = new ReentrantLock();
+    private Condition condVar = bufferLock.newCondition();  
+    // --------------------------------------------------------------
+    
+    
+    public synchronized String take() {
+    	bufferLock.lock(); // adaugat nou
+    	try {//nou
+    		while(empty) { 
+                try {
+                    condVar.await(); // nou, unde aveai wait, acum ai condition.await
+                } catch (InterruptedException ex) {
+                    System.out.println(ex.getMessage());
+                }
             }
-        }
-        
         empty = true;
-        notifyAll();
+        condVar.signalAll(); /// in loc de notifyAll avem signalAll cu condition
         return message;
+    	}finally {
+    		bufferLock.unlock();
+    	}
     }
     public synchronized void put(String message) {
-        while(!empty) {
-            try {
-                wait();
-            } catch (InterruptedException ex) {
-               System.out.println(ex.getMessage());
-            }
-        }
-        
-        System.out.println("Producer put  in the buffer message  = " + message);
-        empty = false;
-        this.message = message; // pune mesajul
-        notifyAll(); // anunta
+    	bufferLock.lock(); // adaugat nou
+    	try {
+	        while(!empty) {
+	            try {
+	               condVar.await(); // la fel
+	            } catch (InterruptedException ex) {
+	               System.out.println(ex.getMessage());
+	            }
+	        }
+	        
+	        System.out.println("Producer put  in the buffer message  = " + message);
+	        empty = false;
+	        this.message = message; // pune mesajul
+	        condVar.signalAll(); // la fel si pentru notifyAll pui condVar
+    	}finally {
+    		bufferLock.unlock();
+    	}
     }
 }
 class Producer implements Runnable {
@@ -124,7 +117,7 @@ class Consumer implements Runnable {
 
 
 
-public class Exemplu5_Producer_Consumer {
+public class Exemplu2_Producer_Consumer_cu_Lock {
     
     public static void main(String[] args) {
         
